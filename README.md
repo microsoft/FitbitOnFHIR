@@ -1,7 +1,7 @@
 # Fitbit on FHIR
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+> This repo has been populated by two main projects to help you get started with bringing Fitbit to FHIR. The webapp to help you authenticate your patients with
+> the Fitbit API and the Function that continously downloads patient data as it becomes available.
 
 As the maintainer of this project, please make a few updates:
 
