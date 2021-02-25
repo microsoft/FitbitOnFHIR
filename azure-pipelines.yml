@@ -24,9 +24,13 @@ steps:
     pip install -r requirements.txt
   displayName: 'Install dependencies'
 
-- task: CredScan@2
+steps:
+- task: securedevelopmentteam.vss-secure-development-tools.build-task-credscan.CredScan@2
+  displayName: 'Run CredScan'
   inputs:
-    toolMajorVersion: 'V1'
+    toolMajorVersion: V2
+    toolVersionV2: LatestPreRelease
+    debugMode: false
 - task: Semmle@0
   inputs:
     sourceCodeDirectory: '$(Build.SourcesDirectory)'
