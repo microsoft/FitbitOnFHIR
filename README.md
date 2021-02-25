@@ -1,9 +1,19 @@
 # Fitbit on FHIR
 
-> [!NOTE]
->This repo has been populated by two main projects to help you get started with bringing Fitbit to FHIR. The webapp to help you authenticate your patients with
+> This repo has been populated by two main projects to help you get started with bringing Fitbit to FHIR. The webapp to help you authenticate your patients with
 > the Fitbit API and the Function that continously downloads patient data as it becomes available.
 
+## Complete Solution
+
+## Authentication and One Time Sync Webapp
+
+The webapp is appropriate for anyone trying to quickly deploy a solution where they would like to ingest historical patient data (30 days be default) from Fitbit and into FHIR.
+
+[Guide to deploying the web app](http://...)
+
+![webapp architecture](media/webapp-architecture.jpg)
+
+## Continuous Sync Azure Function
 
 ## Contributing
 
