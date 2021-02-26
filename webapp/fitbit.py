@@ -19,10 +19,7 @@ class FitbitOAuth:
     def get_headers(self):
         auth_header_raw = f'{config.FITBIT_CLIENT_ID}:{config.FITBIT_CLIENT_SECRET}'.encode()
         auth_header_b64 = b64encode(auth_header_raw).decode('ascii')
-        return auth_header_b64
-
-    
-    
+        return auth_header_b64    
 
 class Fitbit:
     def __init__(self, user, access_token):
@@ -88,8 +85,6 @@ class Fitbit:
             sleep = self.get_sleep(date=date)
             if sleep != {'payload': 'NA'}:
                 result.append(sleep)
-            
-                
         
         return result
 

@@ -23,42 +23,42 @@ pip install -r requirements.txt
 
 ### Azure Key Vault
 
-1. Run the `login` command.
-    ```azurecli-interactive
-    az login
-    ```
+Run the `login` command.
+```azurecli-interactive
+az login
+```
 
-    If the CLI can open your default browser, it will do so and load an Azure sign-in page.
+If the CLI can open your default browser, it will do so and load an Azure sign-in page.
 
-    Otherwise, open a browser page at [https://aka.ms/devicelogin](https://aka.ms/devicelogin) and enter the
-    authorization code displayed in your terminal.
+Otherwise, open a browser page at [https://aka.ms/devicelogin](https://aka.ms/devicelogin) and enter the
+authorization code displayed in your terminal.
 
-1. Use the `az group create` command to create a resource group:
+Use the `az group create` command to create a resource group:
 
-     ```azurecli-interactive
-    az group create --name fitbitOnFHIR-rg --location eastus
-    ```
+```azurecli-interactive
+az group create --name fitbitOnFHIR-rg --location eastus
+```
 
-1. Let's create the Key Vault itself:
+Let's create the Key Vault itself:
 
-    ```azurecli-interactive
-    az keyvault create --name <your-unique-keyvault-name> --resource-group fitbitOnFHIR-rg
-    ```
+```azurecli-interactive
+az keyvault create --name <your-unique-keyvault-name> --resource-group fitbitOnFHIR-rg
+```
 
-1. Grant access to your key vault:
+Grant access to your key vault:
 
-    ```Powershell
-    az keyvault set-policy --name <YourKeyVaultName> --upn user@domain.com --secret-permissions delete get list set
-    ```
+```Powershell
+az keyvault set-policy --name <YourKeyVaultName> --upn user@domain.com --secret-permissions delete get list set
+```
 
-1. Store the key vault name in your as an environmental variable
+Store the key vault name in your as an environmental variable
 
 
-     ```Powershell
-     $Env:KEY_VAULT_NAME="<your-key-vault-name>"
-    ```
+```Powershell
+$Env:KEY_VAULT_NAME="<your-key-vault-name>"
+```
 
-1. Visit your azure portal and navigate to your newly created Key Vault. Go ahead and and create two secrets; their values are equal to the values you got received from your Fitbit App Registration.
+Visit your azure portal and navigate to your newly created Key Vault. Go ahead and and create two secrets; their values are equal to the values you got received from your Fitbit App Registration.
 
 - fitbitClientId
 - fitbitClientSecret
@@ -66,4 +66,10 @@ pip install -r requirements.txt
 ## Azure IoT Connector for FHIR 
 
 1. If you haven't deployed a FHIR instance then you can learn how to do so [here](https://docs.microsoft.com/en-us/azure/healthcare-apis/fhir-paas-cli-quickstart).
-1. Next let's provision an IoT connector, the easiest way to do so is to navigate to the portal and into your FHIR API instance. 
+1. Next let's provision an IoT connector, the easiest way to do so is to navigate to the portal and into your FHIR API instance. Select the IoT Connector under "Add-ins" from the left-hand panel. 
+
+![selecting the IoT Connector](../media/select-connector.jpg)
+
+3. Name the IoT Connector and select create as the Resolution type.
+
+![naming IoT Connector](../media/name-iot-connector.jpg)

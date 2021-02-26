@@ -1,0 +1,76 @@
+{
+    "templateType": "CollectionContent",
+    "template": [
+        {
+            "templateType": "JsonPathContent",
+            "template": {
+                "typeName": "bodyweight",
+                "typeMatchExpression": "$..[?(@weight)]",
+                "timestampExpression": "$.date",
+                "deviceIdExpression": "$.deviceId",
+                "patientIdExpression": "$.deviceId",
+                "values": [
+                    {
+                        "valueName": "bodyweight",
+                        "valueExpression": "$.weight",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "templateType": "JsonPathContent",
+            "template": {
+                "typeName": "hr",
+                "typeMatchExpression": "$..[?(@value)]",
+                "timestampExpression": "$.timeStamp",
+                "deviceIdExpression": "$.deviceId",
+                "values": [
+                    {
+                        "valueName": "hr",
+                        "required": true,
+                        "valueExpression": "$.value"
+                    }
+                ]
+            }
+        },
+        {
+            "templateType": "JsonPathContent",
+            "template": {
+                "typeName": "sleep",
+                "typeMatchExpression": "$..[?(@level)]",
+                "timestampExpression": "$.dateTime",
+                "deviceIdExpression": "$.deviceId",
+                "patientIdExpression": "$.deviceId",
+                "values": [
+                    {
+                        "valueName": "Sleep Level",
+                        "valueExpression": "$.level",
+                        "required": true
+                    },
+                    {
+                        "valueName": "Sleep Level Length",
+                        "valueExpression": "$.seconds",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "templateType": "JsonPathContent",
+            "template": {
+                "typeName": "steps",
+                "typeMatchExpression": "$..[?(@steps)]",
+                "timestampExpression": "$.dateTime",
+                "deviceIdExpression": "$.deviceId",
+                "patientIdExpression": "$.deviceId",
+                "values": [
+                    {
+                        "valueName": "Steps",
+                        "valueExpression": "$.steps"
+                    }
+                ]
+            }
+        }
+    ]
+}
