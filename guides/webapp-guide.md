@@ -73,3 +73,4 @@ Visit your azure portal and navigate to your newly created Key Vault. Go ahead a
 3. Name the IoT Connector and select create as the Resolution type.
 
 ![naming IoT Connector](../media/name-iot-connector.jpg)
+
