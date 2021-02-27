@@ -21,6 +21,21 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
+## Azure IoT Connector for FHIR 
+
+1. If you haven't deployed a FHIR instance then you can learn how to do so [here](https://docs.microsoft.com/en-us/azure/healthcare-apis/fhir-paas-cli-quickstart).
+1. Next let's provision an IoT connector, the easiest way to do so is to navigate to the portal and into your FHIR API instance. Select the IoT Connector under "Add-ins" from the left-hand panel. 
+
+![selecting the IoT Connector](../media/select-connector.jpg)
+
+3. Name the IoT Connector and select `create` as the Resolution type.
+
+![naming IoT Connector](../media/name-iot-connector.jpg)
+
+4. Click `manage client connections` and copy the primary connection string. Save this you will need it later.
+1. Copy and paste the appropriate device and FHIR templates the can be found in `/templates` into 2. and 3. labeled in the image below.
+![configuring the iot connector](../media/config-iot-connector.jpg)
+
 ### Azure Key Vault
 
 Run the `login` command.
@@ -62,15 +77,13 @@ Visit your azure portal and navigate to your newly created Key Vault. Go ahead a
 
 - fitbitClientId
 - fitbitClientSecret
+- eventHubConnStr (you saved this in the previous section)
 
-## Azure IoT Connector for FHIR 
+### Run the app
 
-1. If you haven't deployed a FHIR instance then you can learn how to do so [here](https://docs.microsoft.com/en-us/azure/healthcare-apis/fhir-paas-cli-quickstart).
-1. Next let's provision an IoT connector, the easiest way to do so is to navigate to the portal and into your FHIR API instance. Select the IoT Connector under "Add-ins" from the left-hand panel. 
+Finally we can run our application. From root dir...
 
-![selecting the IoT Connector](../media/select-connector.jpg)
-
-3. Name the IoT Connector and select create as the Resolution type.
-
-![naming IoT Connector](../media/name-iot-connector.jpg)
-
+```powershell
+cd webapp    
+flask run
+```
