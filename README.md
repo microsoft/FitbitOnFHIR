@@ -19,7 +19,15 @@ Deploy this project directly to Azure:
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FFitbitOnFHIR%2Fmain%2Fdeploy%2Fazuredeploy.json")
 
-or you can deploy the app yourself using [this guide](http://...).
+then: 
+
+```powershell
+git clone https://github.com/microsoft/FitbitOnFHIR
+cd webapp
+az webapp up --sku <SKU> --name <app-name>
+```
+
+or you can deploy the app yourself using [this guide](https://github.com/microsoft/FitbitOnFHIR/blob/main/guides/webapp-guide.md).
 
 
 ## Adding continuos monitoring using an Azure function
