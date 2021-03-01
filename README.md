@@ -6,8 +6,6 @@
 ## Authentication and One Time Sync Webapp
 The webapp is appropriate for anyone trying to quickly deploy a solution where they would like to ingest historical patient data (30 days by default) from Fitbit and into FHIR.
 
-Deploy this project directly to Azure:
-
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FFitbitOnFHIR%2Fmain%2Fdeploy%2Fazuredeploy.json)
 
 then: 
