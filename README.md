@@ -17,7 +17,7 @@ The webapp is appropriate for anyone trying to quickly deploy a solution where t
 
 Deploy this project directly to Azure:
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FFitbitOnFHIR%2Fmain%2Fdeploy%2Fazuredeploy.json")
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FFitbitOnFHIR%2Fmain%2Fdeploy%2Fazuredeploy.json)
 
 then: 
 
