@@ -3,13 +3,13 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "fitbitClientId": {
-      "type": "String",
+      "type": "securestring",
       "metadata": {
         "description": "Your Fitbit App Client Id"
       }
     },
     "fitbitClientSecret": {
-      "type": "String",
+      "type": "securestring",
       "metadata": {
         "description": "Your Fitbit App Client Secret"
       }
@@ -184,6 +184,214 @@
         "[resourceId('Microsoft.HealthcareApis/services/iomtconnectors', parameters('fhirServiceName'), parameters('iotConnectorName'))]"
       ]
     },
+
+    {
+      "type": "Microsoft.HealthcareApis/services/iomtconnectors/mappings",
+      "name": "[concat(parameters('fhirServiceName'), '/', parameters('iotConnectorName'), '/device')]",
+      "apiVersion": "2020-05-01-preview",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.HealthcareApis/services/iomtconnectors', parameters('fhirServiceName'), parameters('iotConnectorName'))]"
+      ],
+      "properties": {
+        "content": {
+          "templateType": "CollectionContent",
+          "template": [
+            {
+              "templateType": "JsonPathContent",
+              "template": {
+                "typeName": "bodyweight",
+                "typeMatchExpression": "$..[?(@weight)]",
+                "timestampExpression": "$.date",
+                "deviceIdExpression": "$.deviceId",
+                "patientIdExpression": "$.deviceId",
+                "values": [
+                  {
+                    "valueName": "bodyweight",
+                    "valueExpression": "$.weight",
+                    "required": true
+                  }
+                ]
+              }
+            },
+            {
+              "templateType": "JsonPathContent",
+              "template": {
+                "typeName": "hr",
+                "typeMatchExpression": "$..[?(@value)]",
+                "timestampExpression": "$.timeStamp",
+                "deviceIdExpression": "$.deviceId",
+                "values": [
+                  {
+                    "valueName": "hr",
+                    "required": true,
+                    "valueExpression": "$.value"
+                  }
+                ]
+              }
+            },
+            {
+              "templateType": "JsonPathContent",
+              "template": {
+                "typeName": "sleep",
+                "typeMatchExpression": "$..[?(@level)]",
+                "timestampExpression": "$.dateTime",
+                "deviceIdExpression": "$.deviceId",
+                "patientIdExpression": "$.deviceId",
+                "values": [
+                  {
+                    "valueName": "Sleep Level",
+                    "valueExpression": "$.level",
+                    "required": true
+                  },
+                  {
+                    "valueName": "Sleep Level Length",
+                    "valueExpression": "$.seconds",
+                    "required": true
+                  }
+                ]
+              }
+            },
+            {
+              "templateType": "JsonPathContent",
+              "template": {
+                "typeName": "steps",
+                "typeMatchExpression": "$..[?(@steps)]",
+                "timestampExpression": "$.dateTime",
+                "deviceIdExpression": "$.deviceId",
+                "patientIdExpression": "$.deviceId",
+                "values": [
+                  {
+                    "valueName": "Steps",
+                    "valueExpression": "$.steps"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      "type": "Microsoft.HealthcareApis/services/iomtconnectors/mappings",
+      "name": "[concat(parameters('fhirServiceName'), '/', parameters('iotConnectorName'), '/fhir')]",
+      "apiVersion": "2020-05-01-preview",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.HealthcareApis/services/iomtconnectors', parameters('fhirServiceName'), parameters('iotConnectorName'))]"
+      ],
+      "properties": {
+        "content": {
+          "templateType": "CollectionFhir",
+          "template": [
+            {
+              "templateType": "CodeValueFhir",
+              "template": {
+                "typeName": "weight",
+                "value": {
+                  "valueName": "weight",
+                  "valueType": "Quantity",
+                  "unit": "kg"
+                },
+                "components": [],
+                "codes": [
+                  {
+                    "code": "29463-7",
+                    "system": "http://loinc.org",
+                    "display": "bodyweight"
+                  }
+                ],
+                "category": [
+                  {
+                    "text": "bodyweight"
+                  }
+                ]
+              }
+            },
+            {
+              "templateType": "CodeValueFhir",
+              "template": {
+                "codes": [
+                  {
+                    "code": "8867-4",
+                    "system": "http://loinc.org",
+                    "display": "Heart rate"
+                  }
+                ],
+                "typeName": "hr",
+                "value": {
+                  "defaultPeriod": 60000,
+                  "unit": "beats/min",
+                  "valueName": "hr",
+                  "valueType": "SampledData"
+                }
+              }
+            },
+            {
+              "templateType": "CodeValueFhir",
+              "template": {
+                "typeName": "sleep",
+                "value": {
+                  "valueName": "",
+                  "valueType": "String"
+                },
+                "components": [
+                  {
+                    "codes": [
+                      {
+                        "code": "sleep",
+                        "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                        "display": "Sleep Level"
+                      }
+                    ],
+                    "value": {
+                      "valueName": "Sleep Level",
+                      "valueType": "String"
+                    }
+                  },
+                  {
+                    "codes": [
+                      {
+                        "code": "time",
+                        "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                        "display": "seconds"
+                      }
+                    ],
+                    "value": {
+                      "valueName": "Sleep Level Length",
+                      "valueType": "Quantity",
+                      "unit": "seconds"
+                    }
+                  }
+                ],
+                "codes": [],
+                "category": []
+              }
+            },
+            {
+              "templateType": "CodeValueFhir",
+              "template": {
+                "typeName": "steps",
+                "value": {
+                  "valueName": "steps",
+                  "valueType": "Quantity",
+                  "unit": "Number of steps/Day"
+                },
+                "codes": [
+                  {
+                    "code": "55423-8",
+                    "system": "http://loinc.org",
+                    "display": "Steps"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+
     {
       "type": "Microsoft.KeyVault/vaults",
       "apiVersion": "2016-10-01",
@@ -245,10 +453,10 @@
       "name": "[concat(parameters('keyVaultName'), '/eventHubConnStr')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
-        "[listkeys(resourceId('Microsoft.HealthcareApis/services/iomtconnectors/connections', parameters('fhirServiceName'), parameters('iotConnectorName'), parameters('connectionName')), '2020-05-01-preview').primaryConnectionString]"
+        "[resourceId('Microsoft.HealthcareApis/services/iomtconnectors/connections', parameters('fhirServiceName'), parameters('iotConnectorName'), parameters('connectionName'))]"
       ],
       "properties": {
-        "value": "",
+        "value": "[listkeys(resourceId('Microsoft.HealthcareApis/services/iomtconnectors/connections', parameters('fhirServiceName'), parameters('iotConnectorName'), parameters('connectionName')), '2020-05-01-preview').primaryConnectionString]",
         "contentType": "string"
       }
     }
