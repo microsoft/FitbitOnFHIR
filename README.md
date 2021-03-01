@@ -4,11 +4,7 @@
 > the Fitbit API and the Function that continously downloads patient data as it becomes available.
 
 
-Deploy this project directly to Azure:
 
-![Deploy to Azure](https://aka.ms/deploytoazurebutton)
-
-or you can deploy the app yourself using [this guide](http://...).
 
 
 ## Authentication and One Time Sync Webapp
@@ -16,6 +12,14 @@ or you can deploy the app yourself using [this guide](http://...).
 The webapp is appropriate for anyone trying to quickly deploy a solution where they would like to ingest historical patient data (30 days be default) from Fitbit and into FHIR.
 
 ![webapp architecture](media/webapp-architecture.jpg)
+
+### Quick and easy deploy
+
+Deploy this project directly to Azure:
+
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FFitbitOnFHIR%2Fmain%2Fdeploy%2Fazuredeploy.json%3Ftoken%3DAQWQZ3ASAUBRFQJPHSPSNXDAI2TEC")
+
+or you can deploy the app yourself using [this guide](http://...).
 
 
 ## Adding continuos monitoring using an Azure function
