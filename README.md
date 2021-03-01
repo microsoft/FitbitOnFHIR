@@ -17,6 +17,7 @@ The webapp is appropriate for anyone trying to quickly deploy a solution where t
 
 ![webapp architecture](media/webapp-architecture.jpg)
 
+
 ## Adding continuos monitoring using an Azure function
 
 This is the extended architecture, it adds a an azure function that is triggered by Fitbit whenever data is synced by an authorized user.

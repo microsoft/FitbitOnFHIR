@@ -1,0 +1,256 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "fitbitClientId": {
+      "type": "String",
+      "metadata": {
+        "description": "Your Fitbit App Client Id"
+      }
+    },
+    "fitbitClientSecret": {
+      "type": "String",
+      "metadata": {
+        "description": "Your Fitbit App Client Secret"
+      }
+    },
+    "fhirServiceName": {
+      "type": "String",
+      "metadata": {
+        "description": "The name of the parent Azure API for FHIR service."
+      }
+    },
+    "location": {
+      "allowedValues": [
+        "australiaeast",
+        "centralus",
+        "eastus",
+        "eastus2",
+        "japaneast",
+        "northcentralus",
+        "northeurope",
+        "southcentralus",
+        "southeastasia",
+        "uksouth",
+        "ukwest",
+        "westcentralus",
+        "westeurope",
+        "westus2"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "Location for your Azure API for FHIR service. Same location will be used for IoT Connector"
+      }
+    },
+    "iotConnectorName": {
+      "type": "String",
+      "metadata": {
+        "description": "The name you want to give to your IoT Connector."
+      }
+    },
+    "connectionName": {
+      "type": "String",
+      "metadata": {
+        "description": "The name for a connection to create for your IoT Connector."
+      }
+    },
+    "keyVaultName": {
+      "type": "String",
+      "metadata": {
+        "description": "The name of the keyvault that will store user refresh tokens"
+      }
+    },
+    "siteName": {
+      "type": "String",
+      "metadata": {
+        "description": "The name of you Web App."
+      }
+    },
+    "hostSku": {
+      "defaultValue": "F1",
+      "allowedValues": [
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "The pricing tier for the hosting plan."
+      }
+    },
+    "workerSize": {
+      "defaultValue": "0",
+      "allowedValues": [
+        "0",
+        "1",
+        "2"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "The instance size of the hosting plan (small, medium, or large)."
+      }
+    }
+  },
+  "variables": {
+    "hostPlan": "fitbit-on-fhir-serverfarm"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('hostPlan')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('hostSku')]",
+        "capacity": "[parameters('workerSize')]"
+      },
+      "properties": {
+        "name": "[variables('hostPlan')]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('siteName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('hostPlan'))]"
+      ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "serverFarmId": "[variables('hostPlan')]"
+      },
+      "resources": [
+        {
+          "type": "config",
+          "apiVersion": "2015-08-01",
+          "name": "appsettings",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
+          ],
+          "tags": {
+            "displayName": "vaultName"
+          },
+          "properties": {
+            "VAULT_URL": "[concat(parameters('keyVaultName'), '.vault.azure.net')]"
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.HealthcareApis/services",
+      "apiVersion": "2020-03-15",
+      "name": "[parameters('fhirServiceName')]",
+      "location": "[parameters('location')]",
+      "kind": "fhir-R4",
+      "properties": {
+        "authenticationConfiguration": {
+          "audience": "[concat('https://', parameters('fhirServiceName'), '.azurehealthcareapis.com')]",
+          "authority": "[uri(environment().authentication.loginEndpoint, subscription().tenantId)]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.HealthcareApis/services/iomtconnectors",
+      "apiVersion": "2020-05-01-preview",
+      "name": "[concat(parameters('fhirServiceName'), '/', parameters('iotConnectorName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.HealthcareApis/services', parameters('fhirServiceName'))]"
+      ],
+      "properties": {
+        "serviceConfiguration": {
+          "resourceIdentityResolutionType": "Create"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.HealthcareApis/services/iomtconnectors/connections",
+      "apiVersion": "2020-05-01-preview",
+      "name": "[concat(parameters('fhirServiceName'), '/', parameters('iotConnectorName'), '/', parameters('connectionName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.HealthcareApis/services/iomtconnectors', parameters('fhirServiceName'), parameters('iotConnectorName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2016-10-01",
+      "name": "[parameters('keyVaultName')]",
+      "location": "eastus",
+      "properties": {
+        "sku": {
+          "family": "A",
+          "name": "Standard"
+        },
+        "tenantId": "[subscription().tenantId]",
+        "accessPolicies": [
+          {
+            "tenantId": "[subscription().tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('siteName')), '2018-02-01', 'Full').identity.principalId]",
+            "permissions": {
+              "keys": [
+                "all"
+              ],
+              "secrets": [
+                "all"
+              ]
+            }
+          }
+        ],
+        "enabledForDeployment": false,
+        "enabledForDiskEncryption": false,
+        "enabledForTemplateDeployment": false,
+        "enableSoftDelete": true
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2019-09-01",
+      "name": "[concat(parameters('keyVaultName'), '/fitbitClientId')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ],
+      "properties": {
+        "value": "[parameters('fitbitClientId')]",
+        "contentType": "string"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2019-09-01",
+      "name": "[concat(parameters('keyVaultName'), '/fitbitClientSecret')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ],
+      "properties": {
+        "value": "[parameters('fitbitClientSecret')]",
+        "contentType": "string"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2019-09-01",
+      "name": "[concat(parameters('keyVaultName'), '/eventHubConnStr')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+        "[listkeys(resourceId('Microsoft.HealthcareApis/services/iomtconnectors/connections', parameters('fhirServiceName'), parameters('iotConnectorName'), parameters('connectionName')), '2020-05-01-preview').primaryConnectionString]"
+      ],
+      "properties": {
+        "value": "",
+        "contentType": "string"
+      }
+    }
+  ]
+}
