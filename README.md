@@ -13,7 +13,7 @@ The webapp is appropriate for anyone trying to quickly deploy a solution where t
 
 ![webapp architecture](media/webapp-architecture.jpg)
 
-### Quick and easy deploy
+### Quickstart
 
 Deploy this project directly to Azure:
 
