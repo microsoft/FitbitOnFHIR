@@ -4,6 +4,7 @@
 > the Fitbit API and the Function that continously downloads patient data as it becomes available.
 
 ## Authentication and One Time Sync Webapp
+The webapp is appropriate for anyone trying to quickly deploy a solution where they would like to ingest historical patient data (30 days by default) from Fitbit and into FHIR.
 
 Deploy this project directly to Azure:
 
@@ -19,7 +20,7 @@ az webapp up --sku <SKU> --name <app-name>
 
 or you can deploy the app yourself using [this guide](https://github.com/microsoft/FitbitOnFHIR/blob/main/guides/webapp-guide.md).
 
-The webapp is appropriate for anyone trying to quickly deploy a solution where they would like to ingest historical patient data (30 days be default) from Fitbit and into FHIR.
+
 
 ### Architecture
 
