@@ -31,7 +31,7 @@ or you can deploy the app yourself using [this guide](https://github.com/microso
 ![webapp architecture](media/webapp-architecture.jpg)
 
 
-## Adding continuos monitoring using an Azure function
+## Adding continuous monitoring using an Azure function
 
 This is the extended architecture, it adds a an azure function that is triggered by Fitbit whenever data is synced by an authorized user.
 
