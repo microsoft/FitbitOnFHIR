@@ -6,7 +6,6 @@
 ## Authentication and One Time Sync Webapp
 The webapp is appropriate for anyone trying to quickly deploy a solution where they would like to ingest historical patient data (30 days by default) from Fitbit and into FHIR.
 
-<<<<<<< HEAD
 The webapp is appropriate for anyone trying to quickly deploy a solution where they would like to ingest historical patient data (30 days be default) from Fitbit and into FHIR.
 
 ![webapp architecture](media/webapp-architecture.jpg)
