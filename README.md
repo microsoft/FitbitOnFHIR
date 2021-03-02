@@ -3,12 +3,10 @@
 > This repo has been populated by two main projects to help you get started with bringing Fitbit to FHIR. The webapp to help you authenticate your patients with
 > the Fitbit API and the Function that continously downloads patient data as it becomes available.
 
-
-
-
-
 ## Authentication and One Time Sync Webapp
+The webapp is appropriate for anyone trying to quickly deploy a solution where they would like to ingest historical patient data (30 days by default) from Fitbit and into FHIR.
 
+<<<<<<< HEAD
 The webapp is appropriate for anyone trying to quickly deploy a solution where they would like to ingest historical patient data (30 days be default) from Fitbit and into FHIR.
 
 ![webapp architecture](media/webapp-architecture.jpg)
@@ -18,6 +16,9 @@ The webapp is appropriate for anyone trying to quickly deploy a solution where t
 Deploy this project directly to Azure:
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FFitbitOnFHIR%2Fmain%2Fdeploy%2Fazuredeploy.json")
+=======
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FFitbitOnFHIR%2Fmain%2Fdeploy%2Fazuredeploy.json)
+>>>>>>> 1e6d555c6076f80c3febbfcf086614dd79b36874
 
 then: 
 
@@ -32,6 +33,12 @@ az webapp up --sku <SKU> --name <app-name>
 ```
 
 or you can deploy the app yourself using [this guide](https://github.com/microsoft/FitbitOnFHIR/blob/main/guides/webapp-guide.md).
+
+
+
+### Architecture
+
+![webapp architecture](media/webapp-architecture.jpg)
 
 
 ## Adding continuos monitoring using an Azure function
