@@ -1,465 +1,548 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    "fitbitClientId": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Your Fitbit App Client Id"
-      }
-    },
-    "fitbitClientSecret": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Your Fitbit App Client Secret"
-      }
-    },
-    "fhirServiceName": {
-      "type": "String",
-      "metadata": {
-        "description": "The name of the parent Azure API for FHIR service."
-      }
-    },
-    "location": {
-      "allowedValues": [
-        "australiaeast",
-        "centralus",
-        "eastus",
-        "eastus2",
-        "japaneast",
-        "northcentralus",
-        "northeurope",
-        "southcentralus",
-        "southeastasia",
-        "uksouth",
-        "ukwest",
-        "westcentralus",
-        "westeurope",
-        "westus2"
-      ],
-      "type": "String",
-      "metadata": {
-        "description": "Location for your Azure API for FHIR service. Same location will be used for IoT Connector"
-      }
-    },
-    "iotConnectorName": {
-      "type": "String",
-      "metadata": {
-        "description": "The name you want to give to your IoT Connector."
-      }
-    },
-    "connectionName": {
-      "type": "String",
-      "metadata": {
-        "description": "The name for a connection to create for your IoT Connector."
-      }
-    },
-    "keyVaultName": {
-      "type": "String",
-      "metadata": {
-        "description": "The name of the keyvault that will store user refresh tokens"
-      }
-    },
-    "siteName": {
-      "type": "String",
-      "metadata": {
-        "description": "The name of you Web App."
-      }
-    },
-    "hostSku": {
-      "defaultValue": "F1",
-      "allowedValues": [
-        "F1",
-        "D1",
-        "B1",
-        "B2",
-        "B3",
-        "S1",
-        "S2",
-        "S3",
-        "P1",
-        "P2",
-        "P3",
-        "P4"
-      ],
-      "type": "String",
-      "metadata": {
-        "description": "The pricing tier for the hosting plan."
-      }
-    },
-    "workerSize": {
-      "defaultValue": "0",
-      "allowedValues": [
-        "0",
-        "1",
-        "2"
-      ],
-      "type": "String",
-      "metadata": {
-        "description": "The instance size of the hosting plan (small, medium, or large)."
-      }
-    }
-  },
-  "variables": {
-    "hostPlan": "fitbit-on-fhir-serverfarm"
-  },
-  "resources": [
-    {
-      "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2020-06-01",
-      "name": "[variables('hostPlan')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "[parameters('hostSku')]",
-        "capacity": "[parameters('workerSize')]"
-      },
-      "properties": {
-        "name": "[variables('hostPlan')]"
-      }
-    },
-    {
-      "type": "Microsoft.Web/sites",
-      "apiVersion": "2020-06-01",
-      "name": "[parameters('siteName')]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', variables('hostPlan'))]"
-      ],
-      "identity": {
-        "type": "SystemAssigned"
-      },
-      "properties": {
-        "serverFarmId": "[variables('hostPlan')]"
-      },
-      "resources": [
-        {
-          "type": "config",
-          "apiVersion": "2015-08-01",
-          "name": "appsettings",
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
-          ],
-          "tags": {
-            "displayName": "vaultName"
-          },
-          "properties": {
-            "VAULT_URL": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net')]"
-          }
-        }
-
-      ]
-    },
-    {
-      "type": "Microsoft.HealthcareApis/services",
-      "apiVersion": "2020-03-15",
-      "name": "[parameters('fhirServiceName')]",
-      "location": "[parameters('location')]",
-      "kind": "fhir-R4",
-      "properties": {
-        "authenticationConfiguration": {
-          "audience": "[concat('https://', parameters('fhirServiceName'), '.azurehealthcareapis.com')]",
-          "authority": "[uri(environment().authentication.loginEndpoint, subscription().tenantId)]"
-        }
-      }
-    },
-    {
-      "type": "Microsoft.HealthcareApis/services/iomtconnectors",
-      "apiVersion": "2020-05-01-preview",
-      "name": "[concat(parameters('fhirServiceName'), '/', parameters('iotConnectorName'))]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.HealthcareApis/services', parameters('fhirServiceName'))]"
-      ],
-      "properties": {
-        "serviceConfiguration": {
-          "resourceIdentityResolutionType": "Create"
-        }
-      }
-    },
-    {
-      "type": "Microsoft.HealthcareApis/services/iomtconnectors/connections",
-      "apiVersion": "2020-05-01-preview",
-      "name": "[concat(parameters('fhirServiceName'), '/', parameters('iotConnectorName'), '/', parameters('connectionName'))]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.HealthcareApis/services/iomtconnectors', parameters('fhirServiceName'), parameters('iotConnectorName'))]"
-      ]
-    },
-
-    {
-      "type": "Microsoft.HealthcareApis/services/iomtconnectors/mappings",
-      "name": "[concat(parameters('fhirServiceName'), '/', parameters('iotConnectorName'), '/device')]",
-      "apiVersion": "2020-05-01-preview",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.HealthcareApis/services/iomtconnectors', parameters('fhirServiceName'), parameters('iotConnectorName'))]"
-      ],
-      "properties": {
-        "content": {
-          "templateType": "CollectionContent",
-          "template": [
-            {
-              "templateType": "JsonPathContent",
-              "template": {
-                "typeName": "bodyweight",
-                "typeMatchExpression": "$..[?(@weight)]",
-                "timestampExpression": "$.date",
-                "deviceIdExpression": "$.deviceId",
-                "patientIdExpression": "$.deviceId",
-                "values": [
-                  {
-                    "valueName": "bodyweight",
-                    "valueExpression": "$.weight",
-                    "required": true
-                  }
-                ]
-              }
-            },
-            {
-              "templateType": "JsonPathContent",
-              "template": {
-                "typeName": "hr",
-                "typeMatchExpression": "$..[?(@value)]",
-                "timestampExpression": "$.timeStamp",
-                "deviceIdExpression": "$.deviceId",
-                "values": [
-                  {
-                    "valueName": "hr",
-                    "required": true,
-                    "valueExpression": "$.value"
-                  }
-                ]
-              }
-            },
-            {
-              "templateType": "JsonPathContent",
-              "template": {
-                "typeName": "sleep",
-                "typeMatchExpression": "$..[?(@level)]",
-                "timestampExpression": "$.dateTime",
-                "deviceIdExpression": "$.deviceId",
-                "patientIdExpression": "$.deviceId",
-                "values": [
-                  {
-                    "valueName": "Sleep Level",
-                    "valueExpression": "$.level",
-                    "required": true
-                  },
-                  {
-                    "valueName": "Sleep Level Length",
-                    "valueExpression": "$.seconds",
-                    "required": true
-                  }
-                ]
-              }
-            },
-            {
-              "templateType": "JsonPathContent",
-              "template": {
-                "typeName": "steps",
-                "typeMatchExpression": "$..[?(@steps)]",
-                "timestampExpression": "$.dateTime",
-                "deviceIdExpression": "$.deviceId",
-                "patientIdExpression": "$.deviceId",
-                "values": [
-                  {
-                    "valueName": "Steps",
-                    "valueExpression": "$.steps"
-                  }
-                ]
-              }
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "fitbitClientId": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Your Fitbit App Client Id"
             }
-          ]
-        }
-      }
-    },
-
-    {
-      "type": "Microsoft.HealthcareApis/services/iomtconnectors/mappings",
-      "name": "[concat(parameters('fhirServiceName'), '/', parameters('iotConnectorName'), '/fhir')]",
-      "apiVersion": "2020-05-01-preview",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.HealthcareApis/services/iomtconnectors', parameters('fhirServiceName'), parameters('iotConnectorName'))]"
-      ],
-      "properties": {
-        "content": {
-          "templateType": "CollectionFhir",
-          "template": [
-            {
-              "templateType": "CodeValueFhir",
-              "template": {
-                "typeName": "weight",
-                "value": {
-                  "valueName": "weight",
-                  "valueType": "Quantity",
-                  "unit": "kg"
-                },
-                "components": [],
-                "codes": [
-                  {
-                    "code": "29463-7",
-                    "system": "http://loinc.org",
-                    "display": "bodyweight"
-                  }
-                ],
-                "category": [
-                  {
-                    "text": "bodyweight"
-                  }
-                ]
-              }
-            },
-            {
-              "templateType": "CodeValueFhir",
-              "template": {
-                "codes": [
-                  {
-                    "code": "8867-4",
-                    "system": "http://loinc.org",
-                    "display": "Heart rate"
-                  }
-                ],
-                "typeName": "hr",
-                "value": {
-                  "defaultPeriod": 60000,
-                  "unit": "beats/min",
-                  "valueName": "hr",
-                  "valueType": "SampledData"
-                }
-              }
-            },
-            {
-              "templateType": "CodeValueFhir",
-              "template": {
-                "typeName": "sleep",
-                "value": {
-                  "valueName": "",
-                  "valueType": "String"
-                },
-                "components": [
-                  {
-                    "codes": [
-                      {
-                        "code": "sleep",
-                        "system": "http://terminology.hl7.org/CodeSystem/observation-category",
-                        "display": "Sleep Level"
-                      }
-                    ],
-                    "value": {
-                      "valueName": "Sleep Level",
-                      "valueType": "String"
-                    }
-                  },
-                  {
-                    "codes": [
-                      {
-                        "code": "time",
-                        "system": "http://terminology.hl7.org/CodeSystem/observation-category",
-                        "display": "seconds"
-                      }
-                    ],
-                    "value": {
-                      "valueName": "Sleep Level Length",
-                      "valueType": "Quantity",
-                      "unit": "seconds"
-                    }
-                  }
-                ],
-                "codes": [],
-                "category": []
-              }
-            },
-            {
-              "templateType": "CodeValueFhir",
-              "template": {
-                "typeName": "steps",
-                "value": {
-                  "valueName": "steps",
-                  "valueType": "Quantity",
-                  "unit": "Number of steps/Day"
-                },
-                "codes": [
-                  {
-                    "code": "55423-8",
-                    "system": "http://loinc.org",
-                    "display": "Steps"
-                  }
-                ]
-              }
-            }
-          ]
-        }
-      }
-    },
-
-    {
-      "type": "Microsoft.KeyVault/vaults",
-      "apiVersion": "2016-10-01",
-      "name": "[parameters('keyVaultName')]",
-      "location": "eastus",
-      "properties": {
-        "sku": {
-          "family": "A",
-          "name": "Standard"
         },
-        "tenantId": "[subscription().tenantId]",
-        "accessPolicies": [
-          {
-            "tenantId": "[subscription().tenantId]",
-            "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('siteName')), '2018-02-01', 'Full').identity.principalId]",
-            "permissions": {
-              "keys": [
-                "all"
-              ],
-              "secrets": [
-                "all"
-              ]
+        "fitbitClientSecret": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Your Fitbit App Client Secret"
             }
-          }
-        ],
-        "enabledForDeployment": false,
-        "enabledForDiskEncryption": false,
-        "enabledForTemplateDeployment": false,
-        "enableSoftDelete": true
-      }
+        },
+        "fhirServiceName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the parent Azure API for FHIR service."
+            }
+        },
+        "location": {
+            "type": "string",
+            "allowedValues": [
+                "australiaeast",
+                "centralus",
+                "eastus",
+                "eastus2",
+                "japaneast",
+                "northcentralus",
+                "northeurope",
+                "southcentralus",
+                "southeastasia",
+                "uksouth",
+                "ukwest",
+                "westcentralus",
+                "westeurope",
+                "westus2"
+            ],
+            "metadata": {
+                "description": "Location for your Azure API for FHIR service. Same location will be used for IoT Connector"
+            }
+        },
+        "iotConnectorName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name you want to give to your IoT Connector."
+            }
+        },
+        "connectionName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name for a connection to create for your IoT Connector."
+            }
+        },
+        "KeyVaultName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the keyvault that will store user refresh tokens"
+            }
+        },
+        "webAppName": {
+            "type": "String"
+        },
+        "serverfarmName": {
+            "type": "String"
+        }
+
     },
-    {
-      "type": "Microsoft.KeyVault/vaults/secrets",
-      "apiVersion": "2019-09-01",
-      "name": "[concat(parameters('keyVaultName'), '/fitbitClientId')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
-      ],
-      "properties": {
-        "value": "[parameters('fitbitClientId')]",
-        "contentType": "string"
-      }
-    },
-    {
-      "type": "Microsoft.KeyVault/vaults/secrets",
-      "apiVersion": "2019-09-01",
-      "name": "[concat(parameters('keyVaultName'), '/fitbitClientSecret')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
-      ],
-      "properties": {
-        "value": "[parameters('fitbitClientSecret')]",
-        "contentType": "string"
-      }
-    },
-    {
-      "type": "Microsoft.KeyVault/vaults/secrets",
-      "apiVersion": "2019-09-01",
-      "name": "[concat(parameters('keyVaultName'), '/eventHubConnStr')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
-        "[resourceId('Microsoft.HealthcareApis/services/iomtconnectors/connections', parameters('fhirServiceName'), parameters('iotConnectorName'), parameters('connectionName'))]"
-      ],
-      "properties": {
-        "value": "[listkeys(resourceId('Microsoft.HealthcareApis/services/iomtconnectors/connections', parameters('fhirServiceName'), parameters('iotConnectorName'), parameters('connectionName')), '2020-05-01-preview').primaryConnectionString]",
-        "contentType": "string"
-      }
-    }
-  ]
+    "resources": [
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2018-02-01",
+            "name": "[parameters('serverfarmName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "B1",
+                "tier": "Basic",
+                "size": "B1",
+                "family": "B",
+                "capacity": 1
+            },
+            "kind": "linux",
+            "properties": {
+                "perSiteScaling": false,
+                "maximumElasticWorkerCount": 1,
+                "isSpot": false,
+                "freeOfferExpirationTime": "2021-04-03T16:36:39.5833333",
+                "reserved": true,
+                "isXenon": false,
+                "hyperV": false,
+                "targetWorkerCount": 0,
+                "targetWorkerSizeId": 0
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "name": "[parameters('webAppName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarmName'))]"
+            ],
+            "kind": "app,linux",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "enabled": true,
+                "hostNameSslStates": [
+                    {
+                        "name": "[concat(parameters('webAppName'), '.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "hostType": "Standard"
+                    },
+                    {
+                        "name": "[concat(parameters('webAppName'), '.scm.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "hostType": "Repository"
+                    }
+                ],
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarmName'))]",
+                "reserved": true,
+                "isXenon": false,
+                "hyperV": false,
+                "siteConfig": {},
+                "scmSiteAlsoStopped": false,
+                "clientAffinityEnabled": false,
+                "clientCertEnabled": false,
+                "hostNamesDisabled": false,
+                "containerSize": 0,
+                "dailyMemoryTimeQuota": 0,
+                "httpsOnly": false,
+                "redundancyMode": "None"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/config",
+            "apiVersion": "2018-11-01",
+            "name": "[concat(parameters('webAppName'), '/web')]",
+            "location": "Central US",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
+            ],
+            "properties": {
+                "numberOfWorkers": 1,
+                "defaultDocuments": [
+                    "Default.htm",
+                    "Default.html",
+                    "Default.asp",
+                    "index.htm",
+                    "index.html",
+                    "iisstart.htm",
+                    "default.aspx",
+                    "index.php",
+                    "hostingstart.html"
+                ],
+                "netFrameworkVersion": "v4.0",
+                "linuxFxVersion": "PYTHON|3.8",
+                "requestTracingEnabled": false,
+                "remoteDebuggingEnabled": false,
+                "remoteDebuggingVersion": "VS2019",
+                "httpLoggingEnabled": false,
+                "logsDirectorySizeLimit": 35,
+                "detailedErrorLoggingEnabled": false,
+                "publishingUsername": "$appnamerandom",
+                "azureStorageAccounts": {},
+                "scmType": "None",
+                "use32BitWorkerProcess": true,
+                "webSocketsEnabled": false,
+                "alwaysOn": false,
+                "managedPipelineMode": "Integrated",
+                "virtualApplications": [
+                    {
+                        "virtualPath": "/",
+                        "physicalPath": "site\\wwwroot",
+                        "preloadEnabled": false
+                    }
+                ],
+                "loadBalancing": "LeastRequests",
+                "experiments": {
+                    "rampUpRules": []
+                },
+                "autoHealEnabled": false,
+                "localMySqlEnabled": false,
+                "managedServiceIdentityId": 1402,
+                "ipSecurityRestrictions": [
+                    {
+                        "ipAddress": "Any",
+                        "action": "Allow",
+                        "priority": 1,
+                        "name": "Allow all",
+                        "description": "Allow all access"
+                    }
+                ],
+                "scmIpSecurityRestrictions": [
+                    {
+                        "ipAddress": "Any",
+                        "action": "Allow",
+                        "priority": 1,
+                        "name": "Allow all",
+                        "description": "Allow all access"
+                    }
+                ],
+                "scmIpSecurityRestrictionsUseMain": false,
+                "http20Enabled": false,
+                "minTlsVersion": "1.2",
+                "ftpsState": "AllAllowed",
+                "reservedInstanceCount": 0
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/hostNameBindings",
+            "apiVersion": "2018-11-01",
+            "name": "[concat(parameters('webAppName'), '/', parameters('webAppName'), '.azurewebsites.net')]",
+            "location": "Central US",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
+            ],
+            "properties": {
+                "siteName": "[parameters('webAppName')]",
+                "hostNameType": "Verified"
+            }
+        },
+        {
+            "name": "[concat(parameters('webAppName'), '/appsettings')]",
+            "type": "Microsoft.Web/sites/config",
+            "apiVersion": "2020-09-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
+            ],
+            "properties": {
+                "VAULT_URL": "[concat('https://', parameters('KeyVaultName'),'.vault.azure.net/')]"
+            }
+        },
+        {
+            "type": "Microsoft.HealthcareApis/services",
+            "apiVersion": "2020-03-15",
+            "name": "[parameters('fhirServiceName')]",
+            "location": "[parameters('location')]",
+            "kind": "fhir-R4",
+            "properties": {
+                "authenticationConfiguration": {
+                    "audience": "[concat('https://', parameters('fhirServiceName'), '.azurehealthcareapis.com')]",
+                    "authority": "[uri(environment().authentication.loginEndpoint, subscription().tenantId)]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.HealthcareApis/services/iomtconnectors",
+            "name": "[concat(parameters('fhirServiceName'), '/', parameters('iotConnectorName'))]",
+            "apiVersion": "2020-05-01-preview",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.HealthcareApis/services', parameters('fhirServiceName'))]"
+            ],
+            "properties": {
+                "serviceConfiguration": {
+                    "resourceIdentityResolutionType": "Create"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.HealthcareApis/services/iomtconnectors/connections",
+            "name": "[concat(parameters('fhirServiceName'), '/', parameters('iotConnectorName'), '/', parameters('connectionName'))]",
+            "apiVersion": "2020-05-01-preview",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.HealthcareApis/services/iomtconnectors', parameters('fhirServiceName'), parameters('iotConnectorName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.HealthcareApis/services/iomtconnectors/mappings",
+            "name": "[concat(parameters('fhirServiceName'), '/', parameters('iotConnectorName'), '/device')]",
+            "apiVersion": "2020-05-01-preview",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.HealthcareApis/services/iomtconnectors', parameters('fhirServiceName'), parameters('iotConnectorName'))]"
+            ],
+            "properties": {
+                "content": {
+                    "templateType": "CollectionContent",
+                    "template": [
+                        {
+                            "templateType": "JsonPathContent",
+                            "template": {
+                                "typeName": "bodyweight",
+                                "typeMatchExpression": "$..[?(@weight)]",
+                                "timestampExpression": "$.date",
+                                "deviceIdExpression": "$.deviceId",
+                                "patientIdExpression": "$.deviceId",
+                                "values": [
+                                    {
+                                        "valueName": "bodyweight",
+                                        "valueExpression": "$.weight",
+                                        "required": true
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "templateType": "JsonPathContent",
+                            "template": {
+                                "typeName": "hr",
+                                "typeMatchExpression": "$..[?(@value)]",
+                                "timestampExpression": "$.timeStamp",
+                                "deviceIdExpression": "$.deviceId",
+                                "values": [
+                                    {
+                                        "valueName": "hr",
+                                        "required": true,
+                                        "valueExpression": "$.value"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "templateType": "JsonPathContent",
+                            "template": {
+                                "typeName": "sleep",
+                                "typeMatchExpression": "$..[?(@level)]",
+                                "timestampExpression": "$.dateTime",
+                                "deviceIdExpression": "$.deviceId",
+                                "patientIdExpression": "$.deviceId",
+                                "values": [
+                                    {
+                                        "valueName": "Sleep Level",
+                                        "valueExpression": "$.level",
+                                        "required": true
+                                    },
+                                    {
+                                        "valueName": "Sleep Level Length",
+                                        "valueExpression": "$.seconds",
+                                        "required": true
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "templateType": "JsonPathContent",
+                            "template": {
+                                "typeName": "steps",
+                                "typeMatchExpression": "$..[?(@steps)]",
+                                "timestampExpression": "$.dateTime",
+                                "deviceIdExpression": "$.deviceId",
+                                "patientIdExpression": "$.deviceId",
+                                "values": [
+                                    {
+                                        "valueName": "Steps",
+                                        "valueExpression": "$.steps"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.HealthcareApis/services/iomtconnectors/mappings",
+            "name": "[concat(parameters('fhirServiceName'), '/', parameters('iotConnectorName'), '/fhir')]",
+            "apiVersion": "2020-05-01-preview",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.HealthcareApis/services/iomtconnectors', parameters('fhirServiceName'), parameters('iotConnectorName'))]"
+            ],
+            "properties": {
+                "content": {
+                    "templateType": "CollectionFhir",
+                    "template": [
+                        {
+                            "templateType": "CodeValueFhir",
+                            "template": {
+                                "typeName": "weight",
+                                "value": {
+                                    "valueName": "weight",
+                                    "valueType": "Quantity",
+                                    "unit": "kg"
+                                },
+                                "components": [],
+                                "codes": [
+                                    {
+                                        "code": "29463-7",
+                                        "system": "http://loinc.org",
+                                        "display": "bodyweight"
+                                    }
+                                ],
+                                "category": [
+                                    {
+                                        "text": "bodyweight"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "templateType": "CodeValueFhir",
+                            "template": {
+                                "codes": [
+                                    {
+                                        "code": "8867-4",
+                                        "system": "http://loinc.org",
+                                        "display": "Heart rate"
+                                    }
+                                ],
+                                "typeName": "hr",
+                                "value": {
+                                    "defaultPeriod": 60000,
+                                    "unit": "beats/min",
+                                    "valueName": "hr",
+                                    "valueType": "SampledData"
+                                }
+                            }
+                        },
+                        {
+                            "templateType": "CodeValueFhir",
+                            "template": {
+                                "typeName": "sleep",
+                                "value": {
+                                    "valueName": "",
+                                    "valueType": "String"
+                                },
+                                "components": [
+                                    {
+                                        "codes": [
+                                            {
+                                                "code": "sleep",
+                                                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                                                "display": "Sleep Level"
+                                            }
+                                        ],
+                                        "value": {
+                                            "valueName": "Sleep Level",
+                                            "valueType": "String"
+                                        }
+                                    },
+                                    {
+                                        "codes": [
+                                            {
+                                                "code": "time",
+                                                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                                                "display": "seconds"
+                                            }
+                                        ],
+                                        "value": {
+                                            "valueName": "Sleep Level Length",
+                                            "valueType": "Quantity",
+                                            "unit": "seconds"
+                                        }
+                                    }
+                                ],
+                                "codes": [],
+                                "category": []
+                            }
+                        },
+                        {
+                            "templateType": "CodeValueFhir",
+                            "template": {
+                                "typeName": "steps",
+                                "value": {
+                                    "valueName": "steps",
+                                    "valueType": "Quantity",
+                                    "unit": "Number of steps/Day"
+                                },
+                                "codes": [
+                                    {
+                                        "code": "55423-8",
+                                        "system": "http://loinc.org",
+                                        "display": "Steps"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2016-10-01",
+            "name": "[parameters('keyVaultName')]",
+            "location": "eastus",
+            "properties": {
+                "sku": {
+                    "family": "A",
+                    "name": "Standard"
+                },
+                "tenantId": "[subscription().tenantId]",
+                "accessPolicies": [
+                    {
+
+                        "tenantId": "[subscription().tenantId]",
+                        "objectId": "[subscription().tenantId]",
+                        "permissions": {
+                            "keys": [
+                                "all"
+                            ],
+                            "secrets": [
+                                "all"
+                            ]
+                        }
+                    }
+                ],
+                "enabledForDeployment": false,
+                "enabledForDiskEncryption": false,
+                "enabledForTemplateDeployment": false,
+                "enableSoftDelete": true
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "apiVersion": "2019-09-01",
+            "name": "[concat(parameters('keyVaultName'), '/fitbitClientId')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+            ],
+            "properties": {
+                "value": "[parameters('fitbitClientId')]",
+                "contentType": "string"
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "apiVersion": "2019-09-01",
+            "name": "[concat(parameters('keyVaultName'), '/fitbitClientSecret')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+            ],
+            "properties": {
+                "value": "[parameters('fitbitClientSecret')]",
+                "contentType": "string"
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "apiVersion": "2019-09-01",
+            "name": "[concat(parameters('keyVaultName'), '/eventHubConnStr')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+                "[resourceId('Microsoft.HealthcareApis/services/iomtconnectors/connections', parameters('fhirServiceName'), parameters('iotConnectorName'), parameters('connectionName'))]"
+            ],
+            "properties": {
+                "value": "[listkeys(resourceId('Microsoft.HealthcareApis/services/iomtconnectors/connections', parameters('fhirServiceName'), parameters('iotConnectorName'), parameters('connectionName')), '2020-05-01-preview').primaryConnectionString]",
+                "contentType": "string"
+            }
+        }
+    ]
 }
