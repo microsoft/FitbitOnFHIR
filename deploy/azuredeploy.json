@@ -63,7 +63,7 @@
         "webAppName": {
             "type": "String"
         },
-        "serverfarmName": {
+        "appServicePlanName": {
             "type": "String"
         }
 
@@ -72,7 +72,7 @@
         {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2018-02-01",
-            "name": "[parameters('serverfarmName')]",
+            "name": "[parameters('appServicePlanName')]",
             "location": "[parameters('location')]",
             "sku": {
                 "name": "B1",
@@ -100,7 +100,7 @@
             "name": "[parameters('webAppName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarmName'))]"
+                "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
             ],
             "kind": "app,linux",
             "identity": {
@@ -120,7 +120,7 @@
                         "hostType": "Repository"
                     }
                 ],
-                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarmName'))]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
                 "reserved": true,
                 "isXenon": false,
                 "hyperV": false,
