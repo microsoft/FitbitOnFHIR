@@ -1,5 +1,6 @@
 Flask==2.3.2
 azure-identity==1.13.0
-azure-keyvault-secrets==4.6.0
-azure-eventhub==5.10.1
-Authlib==1.2.0
+azure-keyvault-secrets==4.7.0
+azure-eventhub==5.11.3
+Authlib==1.2.1
+certifi==2023.7.22
